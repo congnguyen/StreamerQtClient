@@ -1,0 +1,14 @@
+prefix=/Users/congnguyen/Documents/MyWork/StreamLibs/ffmpeg-6.1/build
+exec_prefix=${prefix}
+libdir=/Users/congnguyen/Documents/MyWork/StreamLibs/ffmpeg-6.1/build/lib
+includedir=/Users/congnguyen/Documents/MyWork/StreamLibs/ffmpeg-6.1/build/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 58.29.100
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil 
+Libs.private: -pthread -lm -framework VideoToolbox -L/opt/homebrew/Cellar/libx11/1.8.10/lib -lX11 -framework CoreFoundation -framework CoreMedia -framework CoreVideo -framework CoreServices
+Cflags: -I${includedir}

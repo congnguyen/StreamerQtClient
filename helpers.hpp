@@ -14,6 +14,11 @@
 
 #include <shared_mutex>
 
+enum InputStreamType {
+    FileSource,
+    RtspSource
+};
+
 struct ClientTrackData {
     std::shared_ptr<rtc::Track> track;
     std::shared_ptr<rtc::RtcpSrReporter> sender;

@@ -26,8 +26,12 @@
 
 #include "h264fileparser.hpp"
 #include "opusfileparser.hpp"
+#include "h264rtspparser.h"
+#include "opusrtspparser.h"
 #include "helpers.hpp"
 #include "ArgParser.hpp"
+
+#include <gst/gst.h>
 
 using namespace rtc;
 using namespace std;
@@ -55,6 +59,7 @@ shared_ptr<Client> createPeerConnection(const Configuration &config,
 /// @param opusSamples Directory with opus samples
 /// @returns Stream object
 shared_ptr<Stream> createStream(const string h264Samples, const unsigned fps, const string opusSamples);
+// shared_ptr<Stream> createStream1(const string rtspLink, const unsigned fps);
 
 /// Add client to stream
 /// @param client Client
@@ -69,8 +74,10 @@ DispatchQueue MainThread("Main");
 
 /// Audio and video stream
 optional<shared_ptr<Stream>> avStream = nullopt;
-
-const string defaultRootDirectory = "../../../examples/streamer/samples/";
+//"/Users/congnguyen/Documents/MyWork/StreamLibs/build-TestGst-Qt_6_5_0_for_macOS-Debug/"
+//const string defaultRootDirectory = "/Users/congnguyen/Documents/MyWork/StreamLibs/build-TestGst-Qt_6_5_0_for_macOS-Debug/";
+//const string defaultRootDirectory = "/Users/congnguyen/Documents/MyWork/StreamLibs/genH264/";
+const string defaultRootDirectory = "/Users/congnguyen/CLionProjects/RtspCapture/cmake-build-debug/";
 const string defaultH264SamplesDirectory = defaultRootDirectory + "h264/";
 string h264SamplesDirectory = defaultH264SamplesDirectory;
 const string defaultOpusSamplesDirectory = defaultRootDirectory + "opus/";
@@ -79,6 +86,9 @@ const string defaultIPAddress = "127.0.0.1";
 const uint16_t defaultPort = 8000;
 string ip_address = defaultIPAddress;
 uint16_t port = defaultPort;
+//congnv
+InputStreamType inputType = InputStreamType::RtspSource;
+string rtspInputLink = "rtsp://10.8.0.84/sample.webm";
 
 /// Incomming message handler for websocket
 /// @param message Incommint message
@@ -108,6 +118,8 @@ void wsOnMessage(json message, Configuration config, shared_ptr<WebSocket> ws) {
 }
 
 int main(int argc, char **argv) try {
+    gst_init(&argc, &argv);
+
     bool enableDebugLogs = false;
     bool printHelp = false;
     int c = 0;
@@ -155,6 +167,7 @@ int main(int argc, char **argv) try {
     if (enableDebugLogs) {
         InitLogger(LogLevel::Debug);
     }
+
 
     Configuration config;
     string stunServer = "stun:stun.l.google.com:19302";
@@ -330,6 +343,73 @@ shared_ptr<Client> createPeerConnection(const Configuration &config,
     return client;
 };
 
+ shared_ptr<Stream> createStream1(const string rtspLink, const unsigned fps) {
+     // video source
+     auto video = make_shared<h264RtspParser>(rtspLink, true , fps);
+     // audio source
+     auto audio = make_shared<opusrtspparser>(rtspLink, true);
+
+     auto stream = make_shared<Stream>(video, audio);
+
+     // set callback responsible for sample sending
+     stream->onSample([ws = make_weak_ptr(stream)](Stream::StreamSourceType type, uint64_t sampleTime, rtc::binary sample) {
+         vector<ClientTrack> tracks{};
+         string streamType = type == Stream::StreamSourceType::Video ? "video" : "audio";
+         // get track for given type
+         function<optional<shared_ptr<ClientTrackData>> (shared_ptr<Client>)> getTrackData = [type](shared_ptr<Client> client) {
+             return type == Stream::StreamSourceType::Video ? client->video : client->audio;
+         };
+         // get all clients with Ready state
+         for(auto id_client: clients) {
+             auto id = id_client.first;
+             auto client = id_client.second;
+             auto optTrackData = getTrackData(client);
+             if (client->getState() == Client::State::Ready && optTrackData.has_value()) {
+                 auto trackData = optTrackData.value();
+                 tracks.push_back(ClientTrack(id, trackData));
+             }
+         }
+         if (!tracks.empty()) {
+             for (auto clientTrack: tracks) {
+                 auto client = clientTrack.id;
+                 auto trackData = clientTrack.trackData;
+                 auto rtpConfig = trackData->sender->rtpConfig;
+
+                 // sample time is in us, we need to convert it to seconds
+                 auto elapsedSeconds = double(sampleTime) / (1000 * 1000);
+                 // get elapsed time in clock rate
+                 uint32_t elapsedTimestamp = rtpConfig->secondsToTimestamp(elapsedSeconds);
+                 // set new timestamp
+                 rtpConfig->timestamp = rtpConfig->startTimestamp + elapsedTimestamp;
+
+                 // get elapsed time in clock rate from last RTCP sender report
+                 auto reportElapsedTimestamp = rtpConfig->timestamp - trackData->sender->lastReportedTimestamp();
+                 // check if last report was at least 1 second ago
+                 if (rtpConfig->timestampToSeconds(reportElapsedTimestamp) > 1) {
+                     trackData->sender->setNeedsToReport();
+                 }
+
+                 cout << "Sending " << streamType << " sample with size: " << to_string(sample.size()) << " to " << client << endl;
+                 try {
+                     // send sample
+                     trackData->track->send(sample);
+                 } catch (const std::exception &e) {
+                     cerr << "Unable to send "<< streamType << " packet: " << e.what() << endl;
+                 }
+             }
+         }
+         MainThread.dispatch([ws]() {
+             if (clients.empty()) {
+                 // we have no clients, stop the stream
+                 if (auto stream = ws.lock()) {
+                     stream->stop();
+                 }
+             }
+         });
+     });
+     return stream;
+ }
+
 /// Create stream
 shared_ptr<Stream> createStream(const string h264Samples, const unsigned fps, const string opusSamples) {
     // video source
@@ -407,8 +487,13 @@ void startStream() {
             return;
         }
     } else {
-        stream = createStream(h264SamplesDirectory, 30, opusSamplesDirectory);
-        avStream = stream;
+        if (inputType == FileSource) {
+            stream = createStream(h264SamplesDirectory, 30, opusSamplesDirectory);
+            avStream = stream;
+        } else {
+             stream = createStream1(rtspInputLink, 30);
+             avStream = stream;
+        }
     }
     stream->start();
 }

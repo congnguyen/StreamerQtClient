@@ -7,7 +7,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-
 #include "dispatchqueue.hpp"
 
 DispatchQueue::DispatchQueue(std::string name, size_t threadCount) :

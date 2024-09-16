@@ -1,0 +1,13 @@
+# ninja log v6
+3	724	1725616688373481004	CMakeFiles/streamer.dir/fileparser.cpp.o	bb98e4d082973092
+616	1120	1725616688985542546	CMakeFiles/streamer.dir/stream.cpp.o	1bfcbe23189c7ed
+6	2290	1725616806490043149	CMakeFiles/streamer.dir/main.cpp.o	e30e53fe83c495e7
+642	1037	1725616689011809736	CMakeFiles/streamer.dir/ArgParser.cpp.o	c055abd61926dee2
+3	706	1725616688373109628	CMakeFiles/streamer.dir/h264fileparser.cpp.o	99c328b109da0a24
+2290	2393	1725616808773943210	streamer	fe848d1598d60323
+3	642	1725616688373353503	CMakeFiles/streamer.dir/opusfileparser.cpp.o	4cc277775407a444
+3	673	1725616688373227336	CMakeFiles/streamer.dir/helpers.cpp.o	63b214ec99754b99
+2	52	1726044594807792982	build.ninja	799c2132b055ad18
+3	615	1725616688372985294	CMakeFiles/streamer.dir/dispatchqueue.cpp.o	ec79db73193cd65f
+6	517	1725616282407845990	CMakeFiles/streamer.dir/opusrtspparser.cpp.o	83720336525ee1d7
+5	534	1725616282407523614	CMakeFiles/streamer.dir/h264rtspparser.cpp.o	7ab6bc739a96f6f2

@@ -1,0 +1,14 @@
+prefix=/Users/congnguyen/Documents/MyWork/StreamLibs/ffmpeg-6.1/build
+exec_prefix=${prefix}
+libdir=/Users/congnguyen/Documents/MyWork/StreamLibs/ffmpeg-6.1/build/lib
+includedir=/Users/congnguyen/Documents/MyWork/StreamLibs/ffmpeg-6.1/build/include
+
+Name: libswresample
+Description: FFmpeg audio resampling library
+Version: 4.12.100
+Requires: 
+Requires.private: libavutil >= 58.29.100
+Conflicts:
+Libs: -L${libdir}  -lswresample 
+Libs.private: -lm
+Cflags: -I${includedir}

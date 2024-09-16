@@ -38,6 +38,7 @@ void FileParser::loadNextSample() {
     string frame_id = to_string(++counter);
 
     string url = directory + "/sample-" + frame_id + extension;
+    std::cout << url << endl;
     ifstream source(url, ios_base::binary);
     if (!source) {
         if (loop && counter > 0) {
@@ -51,6 +52,7 @@ void FileParser::loadNextSample() {
     }
 
     vector<char> contents((std::istreambuf_iterator<char>(source)), std::istreambuf_iterator<char>());
+
     auto *b = reinterpret_cast<const std::byte*>(contents.data());
     sample.assign(b, b + contents.size());
     sampleTime_us += sampleDuration_us;

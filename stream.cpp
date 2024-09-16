@@ -41,25 +41,31 @@ std::pair<std::shared_ptr<StreamSource>, Stream::StreamSourceType> Stream::unsaf
     std::shared_ptr<StreamSource> ss;
     StreamSourceType sst;
     uint64_t nextTime;
-    if (audio->getSampleTime_us() < video->getSampleTime_us()) {
-        ss = audio;
-        sst = StreamSourceType::Audio;
-        nextTime = audio->getSampleTime_us();
-    } else {
-        ss = video;
-        sst = StreamSourceType::Video;
-        nextTime = video->getSampleTime_us();
-    }
+//    if (audio->getSampleTime_us() < video->getSampleTime_us()) {
+//        ss = audio;
+//        sst = StreamSourceType::Audio;
+//        nextTime = audio->getSampleTime_us();
+//    } else {
+//        ss = video;
+//        sst = StreamSourceType::Video;
+//        nextTime = video->getSampleTime_us();
+//    }
 
-    auto currentTime = currentTimeInMicroSeconds();
+    ss = video;
+    sst = StreamSourceType::Video;
+    nextTime = video->getSampleTime_us();
 
-    auto elapsed = currentTime - startTime;
-    if (nextTime > elapsed) {
-        auto waitTime = nextTime - elapsed;
-        mutex.unlock();
-        usleep(waitTime);
-        mutex.lock();
-    }
+//    auto currentTime = currentTimeInMicroSeconds();
+
+//    auto elapsed = currentTime - startTime;
+//    if (nextTime > elapsed) {
+//        auto waitTime = nextTime - elapsed;
+//        //std::cout <<  "wait time: " << waitTime << std::endl;
+//        mutex.unlock();
+//        usleep(waitTime);
+//        mutex.lock();
+//    }
+    usleep(5000);
     return {ss, sst};
 }
 
@@ -90,8 +96,8 @@ void Stream::start() {
     }
     _isRunning = true;
     startTime = currentTimeInMicroSeconds();
-    audio->start();
     video->start();
+//    audio->start();
     dispatchQueue.dispatch([this]() {
         this->sendSample();
     });
