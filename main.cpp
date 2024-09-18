@@ -88,7 +88,8 @@ string ip_address = defaultIPAddress;
 uint16_t port = defaultPort;
 //congnv
 InputStreamType inputType = InputStreamType::RtspSource;
-string rtspInputLink = "rtsp://10.8.0.84/sample.webm";
+string videoRtspInputLink = "rtsp://10.8.0.52/sample.webm";
+string audioRtspInputLink = "rtsp://10.8.0.52:8554/sample.opus";
 
 /// Incomming message handler for websocket
 /// @param message Incommint message
@@ -345,9 +346,9 @@ shared_ptr<Client> createPeerConnection(const Configuration &config,
 
  shared_ptr<Stream> createStream1(const string rtspLink, const unsigned fps) {
      // video source
-     auto video = make_shared<h264RtspParser>(rtspLink, true , fps);
+     auto video = make_shared<h264RtspParser>(videoRtspInputLink, true , fps);
      // audio source
-     auto audio = make_shared<opusrtspparser>(rtspLink, true);
+     auto audio = make_shared<opusrtspparser>(audioRtspInputLink, true);
 
      auto stream = make_shared<Stream>(video, audio);
 
@@ -491,7 +492,7 @@ void startStream() {
             stream = createStream(h264SamplesDirectory, 30, opusSamplesDirectory);
             avStream = stream;
         } else {
-             stream = createStream1(rtspInputLink, 30);
+             stream = createStream1(videoRtspInputLink, 30);
              avStream = stream;
         }
     }
@@ -502,19 +503,38 @@ void startStream() {
 /// @param stream Stream
 /// @param video Video track data
 void sendInitialNalus(shared_ptr<Stream> stream, shared_ptr<ClientTrackData> video) {
-    auto h264 = dynamic_cast<H264FileParser *>(stream->video.get());
-    auto initialNalus = h264->initialNALUS();
 
-    // send previous NALU key frame so users don't have to wait to see stream works
-    if (!initialNalus.empty()) {
-        const double frameDuration_s = double(h264->getSampleDuration_us()) / (1000 * 1000);
-        const uint32_t frameTimestampDuration = video->sender->rtpConfig->secondsToTimestamp(frameDuration_s);
-        video->sender->rtpConfig->timestamp = video->sender->rtpConfig->startTimestamp - frameTimestampDuration * 2;
-        video->track->send(initialNalus);
-        video->sender->rtpConfig->timestamp += frameTimestampDuration;
-        // Send initial NAL units again to start stream in firefox browser
-        video->track->send(initialNalus);
+    if (inputType == FileSource) {
+       auto h264 = dynamic_cast<H264FileParser *>(stream->video.get());
+        auto initialNalus = h264->initialNALUS();
+
+        // send previous NALU key frame so users don't have to wait to see stream works
+        if (!initialNalus.empty()) {
+             const double frameDuration_s = double(h264->getSampleDuration_us()) / (1000 * 1000);
+             const uint32_t frameTimestampDuration = video->sender->rtpConfig->secondsToTimestamp(frameDuration_s);
+             video->sender->rtpConfig->timestamp = video->sender->rtpConfig->startTimestamp - frameTimestampDuration * 2;
+             video->track->send(initialNalus);
+             video->sender->rtpConfig->timestamp += frameTimestampDuration;
+             // Send initial NAL units again to start stream in firefox browser
+             video->track->send(initialNalus);
+        }
+    } else {
+       auto h264 = dynamic_cast<h264RtspParser*>(stream->video.get());
+        auto initialNalus = h264->initialNALUS();
+
+        // send previous NALU key frame so users don't have to wait to see stream works
+        if (!initialNalus.empty()) {
+             const double frameDuration_s = double(h264->getSampleDuration_us()) / (1000 * 1000);
+             const uint32_t frameTimestampDuration = video->sender->rtpConfig->secondsToTimestamp(frameDuration_s);
+             video->sender->rtpConfig->timestamp = video->sender->rtpConfig->startTimestamp - frameTimestampDuration * 2;
+             video->track->send(initialNalus);
+             video->sender->rtpConfig->timestamp += frameTimestampDuration;
+             // Send initial NAL units again to start stream in firefox browser
+             video->track->send(initialNalus);
+        }
     }
+
+
 }
 
 /// Add client to stream

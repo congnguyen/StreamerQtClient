@@ -54,6 +54,7 @@ function createPeerConnection() {
         const video = document.getElementById('video');
         // always overrite the last stream - you may want to do something more clever in practice
         video.srcObject = evt.streams[0]; // The stream groups audio and video tracks
+        console.log('stream type:', evt.streams[0]);
         video.play();
     };
 

@@ -33,7 +33,6 @@ void H264FileParser::loadNextSample() {
         uint32_t length;
         std::memcpy(&length, lengthPtr, sizeof(uint32_t));
         length = ntohl(length);
-        cout << "Length:" << length << endl;
         auto naluStartIndex = i + 4;
         auto naluEndIndex = naluStartIndex + length;
         assert(naluEndIndex <= sample.size());

@@ -24,11 +24,7 @@ public:
     ~RtspParser();
     RtspParser(string rtspLink, bool loop, uint32_t samplesPerSecond);
     int startCapture();
-    std::queue<rtc::binary> mPackets;
-    std::mutex mtx;
-    std::condition_variable cv;
     DispatchQueue mCaptureThread = DispatchQueue("CaptureThread");
-
 
     // StreamSource interface
 public:
