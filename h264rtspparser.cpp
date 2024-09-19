@@ -32,7 +32,7 @@ void h264RtspParser::loadNextSample()
         vector<uint8_t> data = data_queue.front();
         auto *b = reinterpret_cast<const std::byte*>(data.data());
         sample.assign(b, b + data.size());
-        std::cout << "Video Data frame: " << frame_id << " Size: " << data.size() << " Size1: " << sample.size() << std::endl;
+//        std::cout << "Video Data frame: " << frame_id << " Size: " << data.size() << " Size1: " << sample.size() << std::endl;
         data_queue.pop();
         sampleTime_us += sampleDuration_us;
     }
@@ -51,12 +51,15 @@ void h264RtspParser::loadNextSample()
         auto type = header->unitType();
         switch (type) {
         case 7:
+            std::cout << "Found SPS" << std::endl;
             previousUnitType7 = {sample.begin() + i, sample.begin() + naluEndIndex};
             break;
         case 8:
+             std::cout << "Found PPS" << std::endl;
             previousUnitType8 = {sample.begin() + i, sample.begin() + naluEndIndex};;
             break;
         case 5:
+            std::cout << "Found Key frame" << std::endl;
             previousUnitType5 = {sample.begin() + i, sample.begin() + naluEndIndex};;
             break;
         }
@@ -83,14 +86,17 @@ std::vector<std::byte> h264RtspParser::initialNALUS()
 {
     vector<std::byte> units{};
     if (previousUnitType7.has_value()) {
+
         auto nalu = previousUnitType7.value();
         units.insert(units.end(), nalu.begin(), nalu.end());
     }
     if (previousUnitType8.has_value()) {
+
         auto nalu = previousUnitType8.value();
         units.insert(units.end(), nalu.begin(), nalu.end());
     }
     if (previousUnitType5.has_value()) {
+
         auto nalu = previousUnitType5.value();
         units.insert(units.end(), nalu.begin(), nalu.end());
     }
@@ -205,8 +211,10 @@ static GstFlowReturn on_new_video_sample(GstAppSink *sink, gpointer user_data) {
 
 int h264RtspParser::startCapture()
 {
-    std::string pipeline_desc = "rtspsrc location=" + mRtspLink +  " latency=100 !"
-    " queue ! rtpvp8depay ! vp8dec ! videoconvert ! x264enc tune=zerolatency bitrate=500  ! queue !  appsink name=videosink";
+//    std::string pipeline_desc = "rtspsrc location=" + mRtspLink +  " ! "
+//    " queue ! rtpvp8depay ! vp8dec ! videoconvert ! x264enc tune=zerolatency bitrate=500  ! queue !  appsink name=videosink";
+
+    std::string pipeline_desc = "avfvideosrc ! videoconvert ! x264enc tune=zerolatency bitrate=500  !  appsink name=videosink";
 
     std::cout << "Start pipeline: " << pipeline_desc << std::endl;
     GError *error = nullptr;

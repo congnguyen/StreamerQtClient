@@ -56,6 +56,7 @@ public:
     void start();
     void stop();
     const bool & isRunning = _isRunning;
+    bool mStream;
 };
 
 

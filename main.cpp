@@ -88,8 +88,8 @@ string ip_address = defaultIPAddress;
 uint16_t port = defaultPort;
 //congnv
 InputStreamType inputType = InputStreamType::RtspSource;
-string videoRtspInputLink = "rtsp://10.8.0.52/sample.webm";
-string audioRtspInputLink = "rtsp://10.8.0.52:8554/sample.opus";
+string videoRtspInputLink = "rtsp://10.8.0.52/vstream.264";
+string audioRtspInputLink = "rtsp://10.8.0.52/sample.opus";
 
 /// Incomming message handler for websocket
 /// @param message Incommint message
